@@ -3,10 +3,10 @@ import torch.nn as nn
 from torch.optim import Adam
 from omnignn.model import OmniGNN
 
-def build_model(feature_dim, edge_dim, meta_paths, window_size, n_nodes, device):
+def build_model(feature_dim, edge_dim, meta_paths, window_size, n_nodes, device, hidden_dim):
     return OmniGNN(
         in_features=feature_dim,
-        hidden_dim=32,
+        hidden_dim=hidden_dim,
         edge_attr_dim=edge_dim,
         meta_paths=meta_paths,
         window_size=window_size,

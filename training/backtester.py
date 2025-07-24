@@ -24,7 +24,7 @@ setup_logging()
 
 class Backtester:
     def __init__(self, features_time, labels_time, adj_time, edge_time, meta_paths,
-                 all_dates, window_size, device, stock_names, train_months=6,
+                 all_dates, window_size, device, stock_names, hidden_dim, train_months=6,
                  val_months=2, test_months=2, batch_size=16):
         self.features_time = features_time
         self.labels_time = labels_time
@@ -43,6 +43,7 @@ class Backtester:
         self.feature_dim = features_time.shape[2]
         self.edge_dim = edge_time[meta_paths[0]].shape[-1]
         self.n_stocks = len(stock_names)
+        self.hidden_dim = hidden_dim
 
     def run(self, epochs=10, lr=0.001):
         tag = "."
@@ -87,12 +88,12 @@ class Backtester:
             val_X, val_y, val_adj, val_edge = prepare_data(feats_val, labels_val, 0, feats_val.shape[0], self.adj_time, self.edge_time, self.meta_paths, self.window_size)
             test_X, test_y, test_adj, test_edge = prepare_data(feats_test, labels_test, 0, feats_test.shape[0], self.adj_time, self.edge_time, self.meta_paths, self.window_size)
 
-            model = build_model(self.feature_dim, self.edge_dim, self.meta_paths, self.window_size, self.n_nodes, self.device)
+            model = build_model(self.feature_dim, self.edge_dim, self.meta_paths, self.window_size, self.n_nodes, self.device, self.hidden_dim)
             optimizer = Adam(model.parameters(), lr=lr, weight_decay=1e-4)
             criterion = nn.MSELoss()
 
             loss_history, val_loss_history = [], []
-            best_val_loss, patience, wait, best_model_state = float("inf"), 50, 0, None
+            best_val_loss, patience, wait, best_model_state = float("inf"), 25, 0, None
 
             for epoch in range(epochs):
                 train_loss = train_one_epoch(model, optimizer, criterion, train_X, train_y, adj, edge,
