@@ -3,7 +3,18 @@ import numpy as np
 import os
 
 def plot_pred_vs_true(y_true, y_pred, stock_names=None, save_path=None):
+    """
+    Plot true vs. predicted returns over time for each stock.
 
+    Args:
+        y_true (np.ndarray): Ground truth returns (T, N).
+        y_pred (np.ndarray): Predicted returns (T, N).
+        stock_names (list, optional): List of stock names for subplot titles.
+        save_path (str, optional): If provided, saves plot to disk; otherwise shows interactively.
+
+    Returns:
+        None
+    """
     n_samples, n_stocks = y_true.shape
 
     n_cols = 4
@@ -52,6 +63,18 @@ def plot_pred_vs_true(y_true, y_pred, stock_names=None, save_path=None):
         plt.show()
 
 def plot_loss_curve(train_losses, val_losses, save_path=None, title="Training vs. Validation Loss Curve"):
+    """
+    Plot the training and validation loss curves over epochs.
+
+    Args:
+        train_losses (list or np.ndarray): Training loss per epoch.
+        val_losses (list or np.ndarray): Validation loss per epoch.
+        save_path (str, optional): If provided, saves plot to disk; otherwise shows interactively.
+        title (str): Title of the plot.
+
+    Returns:
+        None
+    """
     plt.figure(figsize=(9, 6))
 
     epochs = range(1, len(train_losses) + 1)

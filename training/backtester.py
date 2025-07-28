@@ -23,6 +23,31 @@ from training.logger import setup_logging
 setup_logging()
 
 class Backtester:
+    """
+    Backtester for training and evaluating a temporal GNN model (OmniGNN) using a rolling-window approach.
+
+    This class automates the workflow of:
+    - Normalizing and preparing graph-based time series data.
+    - Training the model with early stopping.
+    - Evaluating on training and testing periods.
+    - Saving metrics, predictions, and model checkpoints.
+
+    Args:
+        features_time (Tensor): Time-series tensor of node features (T, N, F).
+        labels_time (Tensor): Time-series tensor of target labels (T, N).
+        adj_time (dict): Dictionary of adjacency matrices per metapath (keyed by metapath).
+        edge_time (dict): Dictionary of edge attributes per metapath (keyed by metapath).
+        meta_paths (list): List of metapath keys used to index adj_time and edge_time.
+        all_dates (list or pd.Series): Timestamps corresponding to the data.
+        window_size (int): Lookback window size for temporal modeling.
+        device (torch.device): Torch device to run the model on (CPU or CUDA).
+        stock_names (list): List of stock tickers.
+        hidden_dim (int): Hidden dimension for the model layers.
+        train_months (int): Length of training window (months).
+        val_months (int): Length of validation window (months).
+        test_months (int): Length of test window (months).
+        batch_size (int): Batch size for training.
+    """
     def __init__(self, features_time, labels_time, adj_time, edge_time, meta_paths,
                  all_dates, window_size, device, stock_names, hidden_dim, train_months=6,
                  val_months=2, test_months=2, batch_size=16):
@@ -45,8 +70,25 @@ class Backtester:
         self.n_stocks = len(stock_names)
         self.hidden_dim = hidden_dim
 
-    def run(self, epochs=10, lr=0.001):
-        tag = "."
+    def run(self, epochs=600, lr=0.001, tag=None):
+        """
+        Executes the rolling-window backtest, training and evaluating the model on each window.
+
+        This method handles:
+        - Data normalization based on training window.
+        - Data slicing into rolling train/val/test splits.
+        - Model training with early stopping based on validation loss.
+        - Evaluation on both training and test sets.
+        - Logging, metric saving, prediction output, and model checkpointing.
+
+        Args:
+            epochs (int): Maximum number of training epochs per rolling window.
+            lr (float): Learning rate for the optimizer.
+            tag (str): Unique identifier used to name result folders and logs.
+
+        Returns:
+            None
+        """
         results_dir = os.path.join("results", tag)
         os.makedirs(results_dir, exist_ok=True)
         predictions_path = os.path.join(results_dir, "predictions.csv")
@@ -137,8 +179,8 @@ class Backtester:
             loss_plot_path = os.path.join(results_dir, f"Loss_{t2.date()}_to_{t3.date()}_{tag}.png")
             plot_loss_curve(loss_history, val_loss_history, save_path=loss_plot_path)
 
-            train_res, _, _ = evaluate_inverse(model, train_X, train_y, adj, edge, mu_y, sigma_y, self.n_stocks, self.meta_paths, self.device)
-            test_res, y_true_te, y_pred_te = evaluate_inverse(model, test_X, test_y, test_adj, test_edge, mu_y, sigma_y, self.n_stocks, self.meta_paths, self.device)
+            train_res, _, _ = evaluate_inverse(model, train_X, train_y, adj, edge, mu_y, sigma_y, self.n_stocks, self.meta_paths, self.device, self.batch_size)
+            test_res, y_true_te, y_pred_te = evaluate_inverse(model, test_X, test_y, test_adj, test_edge, mu_y, sigma_y, self.n_stocks, self.meta_paths, self.device, self.batch_size)
 
             logging.info(f"Train MSE: {train_res['mse']:.4f} | Test MSE: {test_res['mse']:.4f}")
             plot_path = os.path.join(results_dir, f"pred_vs_true_{t2.date()}_to_{t3.date()}_{tag}.png")

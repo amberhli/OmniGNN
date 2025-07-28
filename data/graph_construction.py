@@ -1,3 +1,32 @@
+"""
+construct_graph.py
+
+This script constructs and caches dynamic graph data structures for financial GNN modeling.
+It loads edge-level time series data and per-node features, processes them into time-indexed 
+adjacency and edge attribute tensors, computes meta-path-based connectivity (e.g., SIS), and 
+saves the resulting tensors for training temporal GNN models.
+
+Main Components:
+- Loads raw edge metadata from CSV and organizes data by timestamp
+- Builds dynamic adjacency and edge feature tensors for "SS", "SI", and "SIS" relations
+- Derives 2-hop meta-paths (e.g., SIS = SI @ SI^T) via matrix multiplication
+- Loads PCA-compressed per-node features and excess return labels
+- Caches the processed graph tensors
+
+Output Files (saved to `data/processed/`):
+- adj_time.pt        : Dictionary of adjacency matrices over time for each path type
+- edge_time.pt       : Dictionary of edge feature tensors over time
+- features_time.pt   : Node-level input features (T x N x F)
+- labels_time.pt     : Node-level labels (T x N)
+- all_dates.csv      : Chronological dates aligned with tensor index
+- meta_paths.txt     : List of meta-paths used for modeling
+- meta_info.json     : Summary metadata for debugging and downstream use
+
+Note:
+- The script assumes raw data exists in `data/raw/`, with one CSV per node and a master edge file.
+- Only stocks and industries listed in `select_stocks` and `select_industries` are included.
+"""
+
 import os
 import torch
 import pandas as pd
