@@ -34,8 +34,8 @@ torch.cuda.manual_seed_all(7)
 
 # ~~~ Configuration ~~~
 select_stocks = ["MSFT", "IBM", "CRM", "INTU", "NOW", "ACN", "TXN", "ADBE", "MU", "PANW"]
-window_size = 12
-hidden_dim = 32
+# window_size = 16 # 12
+# hidden_dim = 64 # 32
 start_date = pd.Timestamp("2019-01-04")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
@@ -49,7 +49,11 @@ all_dates = pd.read_csv(os.path.join(cache_dir, "all_dates.csv"), parse_dates=["
 with open(os.path.join(cache_dir, "meta_paths.txt"), "r") as f:
     meta_paths = [line.strip() for line in f.readlines()]
 
-tag = ""
+# ~~~ Hyperparameters ~~~
+window_sizes = [8, 10, 12, 14, 16]
+hidden_dims = [16, 32, 64, 128]
+hyperparams = list(product(window_sizes, hidden_dims)) # list of tuples of each combo
+tag = "VAL_TEST"
 
 # ~~~ Run Backtest ~~~
 backtester = Backtester(
@@ -59,13 +63,12 @@ backtester = Backtester(
     edge_time=edge_time,            
     meta_paths=meta_paths,
     all_dates=all_dates,
-    window_size=window_size,
     device=device,
     stock_names=select_stocks,
-    hidden_dim=hidden_dim,
+    hyperparams=hyperparams, # window size and hidden dim
     train_months=6,
     val_months=2,
-    test_months=2,
+    test_months=2
 )
 
 backtester.run(tag=tag)
